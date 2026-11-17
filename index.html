@@ -1,0 +1,857 @@
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="color-scheme" content="light dark">
+    <title>Fuel Efficiency & Cost Analysis System (Chemistry + IT)</title>
+    <style>
+      :root{--bg:#EDF1F4;--sf:#fff;--ink:#12202B;--mu:#566673;--ln:#D3DCE3;--clr-a:#0B7A87;--clr-b:#B26F00;--clr-c:#2E7D32;--clr-d:#8E24AA;--rd:#26323B;--ok:#0B7A47;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+      @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0E161C;--sf:#16222B;--ink:#E8EFF4;--mu:#93A4B2;--ln:#2A3A46;--clr-a:#3CC3D1;--clr-b:#F0B63A;--clr-c:#4CAF50;--clr-d:#AB47BC;--rd:#0A1014;--ok:#5FD59A;color-scheme:dark}}
+      :root[data-theme="dark"]{--bg:#0E161C;--sf:#16222B;--ink:#E8EFF4;--mu:#93A4B2;--ln:#2A3A46;--clr-a:#3CC3D1;--clr-b:#F0B63A;--clr-c:#4CAF50;--clr-d:#AB47BC;--rd:#0A1014;--ok:#5FD59A;color-scheme:dark}
+      *{box-sizing:border-box}
+      html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
+      body{margin:0 auto;background:var(--bg);color:var(--ink);font:16px/1.45 "Avenir Next","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;max-width:900px;padding:20px 16px 40px}
+      [hidden]{display:none!important}
+      h1{font-size:1.7rem;line-height:1.15;letter-spacing:-.02em;margin:0 0 6px}
+      h2{font-size:1.05rem;margin:26px 0 10px}
+      .sub{color:var(--mu);margin:0 0 16px}
+      .seg{display:flex;border:1px solid var(--ln);border-radius:10px;overflow:hidden;background:var(--sf);margin-bottom:10px;}
+      .seg button{flex:1;padding:11px 8px;border:0;background:none;color:var(--mu);font:inherit;font-weight:600;cursor:pointer;transition:0.2s;}
+      .seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+      .seg button:disabled, input:disabled, select:disabled, #go:disabled { opacity: 0.5; cursor: not-allowed; }
+      .main,.card,.hr,.calc,.viva,.def-card{background:var(--sf);border:1px solid var(--ln);border-radius:12px;padding:14px}
+      .main{margin-top:12px}
+      label{display:block;font-size:.85rem;color:var(--mu)}
+      label small{font-size:.8rem}
+      input,select{width:100%;margin-top:4px;padding:10px;font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--ln);border-radius:8px}
+      button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--clr-a);outline-offset:2px}
+      #go{width:100%;margin-top:12px;padding:14px;border:0;border-radius:10px;background:var(--ink);color:var(--bg);font:inherit;font-weight:700;font-size:1.05rem;cursor:pointer}
+      #err{color:#C0392B;margin:6px 0 0;min-height:1.2em;font-size:.9rem}
+      #stage{position:relative;height:min(68vw,400px);min-height:270px;border-radius:12px;overflow:hidden;border:1px solid var(--ln);background:var(--rd);touch-action:pan-y;cursor:grab;margin-top:6px}
+      #stage canvas{display:block;width:100%;height:100%}
+      .msg{position:absolute;inset:0;display:grid;place-items:center;padding:20px;text-align:center;color:#cfd8de}
+      .cap{color:var(--mu);font-size:.8rem;margin:8px 0 0}
+      
+      .xray-btn{position:absolute;top:12px;left:12px;padding:8px 12px;border-radius:8px;background:rgba(0,0,0,0.6);color:white;border:1px solid rgba(255,255,255,0.2);cursor:pointer;font-size:0.85rem;font-weight:600;z-index:10;transition:0.2s;backdrop-filter:blur(4px);}
+      .xray-btn:hover{background:rgba(0,0,0,0.8);}
+      .xray-btn[aria-pressed="true"]{border-color:var(--clr-a);color:var(--clr-a);}
+      
+      .hud{display:grid;gap:8px;margin-top:10px;grid-template-columns:1fr}
+      @media(min-width:560px){.hud.two{grid-template-columns:1fr 1fr}}
+      
+      .A{--clr:var(--clr-a)}.B{--clr:var(--clr-b)}.C{--clr:var(--clr-c)}.D{--clr:var(--clr-d)}
+      .hr{border-left:4px solid var(--clr);padding:8px 10px}
+      .hl{display:flex;justify-content:space-between;font-weight:700;gap:8px}
+      .tag{font-size:.85rem;color:var(--mu);font-weight:600;white-space:nowrap}
+      .bar{height:8px;background:var(--ln);border-radius:4px;overflow:hidden;margin:6px 0}
+      .fill{height:100%;width:0;background:var(--clr);transition: width 0.1s linear;}
+      .tx{font-size:.82rem;color:var(--mu);font-variant-numeric:tabular-nums}
+      
+      .grid{display:grid;gap:12px}
+      .card{border-top:3px solid var(--clr);display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      .card h3{grid-column:1/-1;margin:0;font-size:1rem}
+      .card .w{grid-column:1/-1}
+      
+      .def-grid{display:grid;gap:12px;grid-template-columns:1fr;}
+      @media(min-width:560px){.def-grid{grid-template-columns:1fr 1fr;}}
+      .def-card{border-left:4px solid var(--clr-a);}
+      .def-card h3{margin:0 0 6px;font-size:.95rem;color:var(--ink);}
+      .def-card p{margin:0;font-size:.85rem;color:var(--mu);line-height:1.4;}
+      .def-card code{background:var(--bg);padding:2px 4px;border-radius:4px;font-family:monospace;color:var(--ink);}
+      .chem-note{font-size:.75rem; color:var(--mu); margin-top:8px; font-style:italic;}
+      
+      .tw{overflow-x:auto;background:var(--sf);border:1px solid var(--ln);border-radius:12px}
+      table{width:100%;border-collapse:collapse;font-size:.92rem}
+      th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--ln);white-space:nowrap}
+      th:first-child{color:var(--mu);font-weight:600}
+      tr:last-child td,tr:last-child th{border-bottom:0}
+      td.win{color:var(--ok);font-weight:700}
+      .v{margin:14px 0 0;padding-left:20px}
+      .v li{margin-bottom:6px}
+      .calc{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      .calc dl{grid-column:1/-1;margin:4px 0 0;display:grid;gap:8px}
+      .calc dl div{display:flex;justify-content:space-between;gap:10px;border-top:1px solid var(--ln);padding-top:8px}
+      dt{color:var(--mu);font-size:.88rem}
+      dd{margin:0;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+      
+      .viva{margin-top:20px;border-left:4px solid var(--clr-a);}
+      .viva h3{margin:0 0 10px;font-size:1rem;color:var(--clr-a);}
+      .viva p{font-size:.9rem;margin-bottom:10px;line-height:1.5;}
+      .viva code{background:var(--bg);padding:2px 6px;border-radius:4px;font-family:monospace;color:var(--ink);}
+      .fn{color:var(--mu);font-size:.8rem;margin-top:22px;line-height:1.5;}
+    </style>
+  </head>
+   <body>
+     <h1>Fuel Efficiency & Cost Analysis System</h1>
+     <p class="sub">Chemistry + IT Mini Project: X-Ray Engine, 4-Vehicle Comparison, and Fuel Analysis</p>
+     
+     <h2>Core Mathematical Formulas</h2>
+     <div class="def-grid" style="margin-bottom: 20px;">
+       <div class="def-card" style="border-left-color:var(--clr-c); grid-column: 1 / -1;">
+         <ul style="margin:0; padding-left:20px; font-size:0.95rem; color:var(--ink); line-height:1.6;">
+           <li><b>Fuel Required (per trip):</b> Distance ÷ Mileage</li>
+           <li><b>Total Fuel Cost:</b> (Fuel Required per trip × Fuel Price) × Number of Trips</li>
+           <li><b>Cost per km (CPK):</b> Fuel Price ÷ Mileage</li>
+           <li><b>Estimated Chemical Energy:</b> Fuel Consumed × Calorific Value</li>
+           <li><b>Estimated Budget Distance:</b> (Budget ÷ Fuel Price) × Mileage <em>(Note: Assumes constant mileage and price)</em></li>
+         </ul>
+       </div>
+     </div>
+     
+     <h2>Definitions & Chemistry Scope</h2>
+     <div class="def-grid" style="margin-bottom: 20px;">
+       <div class="def-card">
+         <h3>Fuel Efficiency (Mileage)</h3>
+         <p>The distance a vehicle can travel per unit of fuel (e.g., km/L or km/kg). Higher mileage means less fuel is required for a trip, reducing overall costs.</p>
+       </div>
+       
+       <div class="def-card">
+         <h3>Calorific Value</h3>
+         <p>The amount of heat energy released when a unit of fuel is completely burned (MJ/L or MJ/kg). <em>Values used are approximate reference figures.</em></p>
+       </div>
+       
+       <div class="def-card">
+         <h3>Cost Per Kilometer (CPK)</h3>
+         <p>The estimated fuel cost of driving 1 km, calculated as <code>Fuel Price / Mileage</code>. It is useful for comparing fuel expenses across vehicles, but <strong>excludes maintenance, servicing, depreciation and other ownership costs.</strong></p>
+       </div>
+       
+       <div class="def-card">
+         <h3>CO₂ Emission Factor</h3>
+         <p>The mass of CO₂ released per unit of fuel consumed, expressed as <b>kg/L for liquid fuels</b> or <b>kg/kg for mass-based fuels (CNG)</b>. <em>Note: E20 and mixture values are estimates based on blend assumptions.</em></p>
+       </div>
+     </div>
+     
+     <h2>Live Combustion Chemistry</h2>
+     <div class="def-grid" style="margin-bottom: 20px;">
+       <div class="def-card" style="border-left-color:var(--clr-b); grid-column: 1 / -1;">
+         <h3>Balanced Chemical Equation</h3>
+         <div class="eq-box" id="eqDisplay" style="font-family:monospace; font-size:0.95rem; background:var(--bg); padding:10px; border-radius:8px; border:1px dashed var(--ln); margin-bottom:10px; text-align:center;">Select a fuel to see the equation.</div>
+         <p style="display:flex; justify-content:space-between;">
+           <span>Compound: <strong id="compDisplay">-</strong></span>
+           <span>Energy: <strong id="energyDisplay">-</strong></span>
+           <span>CO₂ Factor: <strong id="co2Display">-</strong></span>
+         </p>
+         <div class="chem-note">*Note: Comparing the number of CO₂ molecules per reaction (e.g., CNG vs Petrol) does not alone establish which fuel is cleaner. A fair comparison must consider the total energy output and emissions per unit of distance.</div>
+       </div>
+     </div>
+     
+     <div class="seg" role="group" aria-label="Number of vehicles">
+       <button id="mSingle" aria-pressed="false">Single Vehicle (X-Ray)</button>
+       <button id="mTwo" aria-pressed="true">Compare 2 Vehicles</button>
+       <button id="mFour" aria-pressed="false">Compare 4 Vehicles</button>
+     </div>
+     
+     <div class="seg" role="group" aria-label="Simulation type">
+       <button id="mTrip" aria-pressed="true">Same trip</button>
+       <button id="mBud" aria-pressed="false">Same budget</button>
+     </div>
+     
+     <div class="main">
+       <div class="grid" style="grid-template-columns:1fr 1fr; margin-bottom:10px;">
+         <label><span id="mainLbl">Trip distance (km)</span><input id="main" type="number" step="any" inputmode="decimal" value="120" min="1" max="100000"></label>
+         <label id="tripsWrap">Trips per month<input id="trips" type="number" step="1" inputmode="numeric" value="1" min="1" max="100"></label>
+       </div>
+       <button id="go">Start Simulation</button>
+       <p id="err" role="alert"></p>
+     </div>
+
+     <div id="stage">
+       <button class="xray-btn" id="xrayBtn" aria-pressed="true" hidden>X-Ray View: On</button>
+     </div>
+     <p class="cap" id="cap"></p>
+
+     <div class="hud">
+       <div class="hr A" id="hA">
+         <div class="hl"><span class="nm"></span><span class="tag"></span></div>
+         <div class="bar"><div class="fill"></div></div>
+         <div class="tx"></div>
+       </div>
+       <div class="hr B" id="hB">
+         <div class="hl"><span class="nm"></span><span class="tag"></span></div>
+         <div class="bar"><div class="fill"></div></div>
+         <div class="tx"></div>
+       </div>
+       <div class="hr C" id="hC" hidden>
+         <div class="hl"><span class="nm"></span><span class="tag"></span></div>
+         <div class="bar"><div class="fill"></div></div>
+         <div class="tx"></div>
+       </div>
+       <div class="hr D" id="hD" hidden>
+         <div class="hl"><span class="nm"></span><span class="tag"></span></div>
+         <div class="bar"><div class="fill"></div></div>
+         <div class="tx"></div>
+       </div>
+     </div>
+
+     <section id="res" hidden>
+       <h2>Result</h2>
+       <div class="tw">
+         <table id="tbl"></table>
+       </div>
+       <ul class="v" id="verdict"></ul>
+
+       <div class="viva" id="viva">
+         <h3>EC CIA: Viva Preparation</h3>
+         <p id="vivaQ1"></p>
+         <p id="vivaQ2"></p>
+         <p id="vivaQ3"></p>
+         <p id="vivaQ4"></p>
+       </div>
+     </section>
+
+     <h2>Vehicles</h2>
+     <div class="grid">
+       <div class="card A" id="cardA">
+         <h3>Vehicle A</h3>
+         <label class="w">Name<input id="nameA" value="Swift Petrol" maxlength="20"></label>
+         <label>Type<select id="typeA"><option value="car">Car</option><option value="bike">Bike</option></select></label>
+         <label>Fuel<select id="fuelA"><option>Petrol</option><option>Diesel</option><option>CNG</option><option>LPG</option><option>E20</option></select></label>
+         <label>Mileage <small id="uMA">km per L</small><input id="milA" type="number" step="any" inputmode="decimal" value="20" min="1" max="100"></label>
+         <label>Price (editable) <small id="uPA">Rs per L</small><input id="priA" type="number" step="any" inputmode="decimal" value="104" min="1" max="1000"></label>
+       </div>
+
+       <div class="card B" id="cardB">
+         <h3>Vehicle B</h3>
+         <label class="w">Name<input id="nameB" value="City CNG" maxlength="20"></label>
+         <label>Type<select id="typeB"><option value="car">Car</option><option value="bike">Bike</option></select></label>
+         <label>Fuel<select id="fuelB"><option>Petrol</option><option>Diesel</option><option selected>CNG</option><option>LPG</option><option>E20</option></select></label>
+         <label>Mileage <small id="uMB">km per kg</small><input id="milB" type="number" step="any" inputmode="decimal" value="28" min="1" max="100"></label>
+         <label>Price (editable) <small id="uPB">Rs per kg</small><input id="priB" type="number" step="any" inputmode="decimal" value="76" min="1" max="1000"></label>
+       </div>
+
+       <div class="card C" id="cardC" hidden>
+         <h3>Vehicle C</h3>
+         <label class="w">Name<input id="nameC" value="Diesel SUV" maxlength="20"></label>
+         <label>Type<select id="typeC"><option value="car">Car</option><option value="bike">Bike</option></select></label>
+         <label>Fuel<select id="fuelC"><option>Petrol</option><option selected>Diesel</option><option>CNG</option><option>LPG</option><option>E20</option></select></label>
+         <label>Mileage <small id="uMC">km per L</small><input id="milC" type="number" step="any" inputmode="decimal" value="15" min="1" max="100"></label>
+         <label>Price (editable) <small id="uPC">Rs per L</small><input id="priC" type="number" step="any" inputmode="decimal" value="92" min="1" max="1000"></label>
+       </div>
+
+       <div class="card D" id="cardD" hidden>
+         <h3>Vehicle D</h3>
+         <label class="w">Name<input id="nameD" value="Sport Bike" maxlength="20"></label>
+         <label>Type<select id="typeD"><option value="car">Car</option><option selected value="bike">Bike</option></select></label>
+         <label>Fuel<select id="fuelD"><option>Petrol</option><option>Diesel</option><option>CNG</option><option>LPG</option><option>E20</option></select></label>
+         <label>Mileage <small id="uMD">km per L</small><input id="milD" type="number" step="any" inputmode="decimal" value="35" min="1" max="100"></label>
+         <label>Price (editable) <small id="uPD">Rs per L</small><input id="priD" type="number" step="any" inputmode="decimal" value="104" min="1" max="1000"></label>
+       </div>
+     </div>
+
+     <h2>Quick calculators</h2>
+     <div class="calc">
+       <label>Distance (km)<input class="ci" id="cD" type="number" step="any" inputmode="decimal" value="120" min="1" max="100000"></label>
+       <label>Fuel used (litres or kg)<input class="ci" id="cF" type="number" step="any" inputmode="decimal" value="6" min="1" max="10000"></label>
+       <label>Mileage (km per unit)<input class="ci" id="cM" type="number" step="any" inputmode="decimal" value="20" min="1" max="100"></label>
+       <label>Fuel price (Rs per unit)<input class="ci" id="cP" type="number" step="any" inputmode="decimal" value="104" min="1" max="1000"></label>
+       <dl id="cout"></dl>
+     </div>
+
+     <p class="fn">
+       <strong>CIA Project Note:</strong> This web application demonstrates the mathematical model and visualizes the chemistry. Its calculations can be compared with the standalone C implementation during testing.
+     </p>
+
+<script src="three.min.js"></script>
+<script>
+(()=>{
+// E20 mathematically calculated: 0.8 * Petrol + 0.2 * Ethanol
+const F={
+  Petrol:{u:'L',cv:34.2,co:2.31,p:104, eq:"2C8H18 + 25O2 → 16CO2 + 18H2O", comp:"Octane (C8H18) - representative"},
+  Diesel:{u:'L',cv:38.6,co:2.68,p:92, eq:"C12H26 + 18.5O2 → 12CO2 + 13H2O", comp:"Dodecane (C12H26) - representative"},
+  CNG:{u:'kg',cv:48.0,co:2.75,p:76, eq:"CH4 + 2O2 → CO2 + 2H2O", comp:"Methane (CH4)"},
+  LPG:{u:'L',cv:25.3,co:1.51,p:68, eq:"C3H8 + 5O2 → 3CO2 + 4H2O", comp:"Propane (C3H8) - representative of LPG mixture"},
+  E20:{u:'L',cv:31.6,co:2.15,p:95, eq:"C2H5OH + 3O2 → 2CO2 + 3H2O", comp:"Ethanol (bio-fuel portion only)"}
+};
+
+const $=s=>document.querySelector(s);
+const ALL_KEYS=['A','B','C','D'];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const val=id=>parseFloat($(id).value),f2=n=>n.toFixed(2);
+const inRange = (n, min, max) => Number.isFinite(n) && n >= min && n <= max;
+
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const dark=matchMedia('(prefers-color-scheme: dark)').matches;
+let has=!!window.THREE;
+const XS=-36,XE=36;
+
+let numVehicles=2; 
+let mode='trip'; 
+let vs=[],tot=[],X=0,maxR=1,maxF=1,maxC=1,raf=0,running=false;
+let moving=[0,0,0,0],rate=[3,3,3,3];
+let hud=ALL_KEYS.map(k=>{const e=$('#h'+k),q=s=>e.querySelector(s);return{nm:q('.nm'),tag:q('.tag'),bar:q('.fill'),tx:q('.tx')}});
+
+function getLane(i) {
+  if(numVehicles===1) return 0;
+  if(numVehicles===2) return [-3.5, 3.5][i]; 
+  return [-5.5, -1.8, 1.8, 5.5][i]; 
+}
+let setModel;
+
+/* ---------- 3D Scene ---------- */
+const stage=$('#stage'),models=[null,null,null,null],puffs=[[],[],[],[]],acc=[0,0,0,0],lastX=[XS,XS,XS,XS];
+let renderer,scene,camera,drag=0,camX=XS,camD=24, loopActive = false, renderRafId = null;
+let isXray = true;
+
+if(!has) {
+  stage.innerHTML='<div class="msg">The 3D view could not load (it needs the Three.js library file). The simulation numbers below still work.</div>';
+} else {
+  try {
+    const M=c=>new THREE.MeshLambertMaterial({color:c});
+    const box=(w,h,d,c,x,y,z,p,opacity=1,isTrans=false)=>{
+      const mat=new THREE.MeshLambertMaterial({color:c});
+      if(isTrans) { mat.transparent = true; mat.opacity = opacity; }
+      const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);
+      m.position.set(x,y,z);(p||scene).add(m);return m;
+    };
+    
+    function build(type,col){
+      const g=new THREE.Group(),wheels=[],pistons=[];
+      
+      const bodyMat = new THREE.MeshLambertMaterial({color:col});
+      bodyMat.transparent = isXray;
+      bodyMat.opacity = isXray ? 0.25 : 1;
+      
+      if(type==='bike'){
+        const b1 = new THREE.Mesh(new THREE.BoxGeometry(1.8,.4,.35), bodyMat); b1.position.set(0,.95,0); g.add(b1);
+        const b2 = new THREE.Mesh(new THREE.BoxGeometry(1.1,.5,.55), bodyMat); b2.position.set(.2,1.5,0); g.add(b2);
+        
+        // Bike Engine Block & Piston
+        box(.5,.9,.5, 0x9aa6b2, -.5, 2, 0, g);
+        const p = box(.1,.25,.1, 0xd9dee3, -.5, 2.1, 0, g);
+        p.userData.baseY = 2.1;
+        p.userData.phase = 0;
+        pistons.push(p);
+
+        const wheel=(x,z,r,w)=>{const p=new THREE.Group();p.position.set(x,r,z);
+          const t=new THREE.Mesh(new THREE.CylinderGeometry(r,r,w,16),M(0x15191d));t.rotation.x=Math.PI/2;p.add(t);
+          p.userData.r=r;g.add(p);wheels.push(p)};
+        wheel(1.25,0,.55,.22);wheel(-1.25,0,.55,.22);
+      } else {
+        const b1 = new THREE.Mesh(new THREE.BoxGeometry(4.2,.9,1.9), bodyMat); b1.position.set(0,.9,0); g.add(b1);
+        const b2 = new THREE.Mesh(new THREE.BoxGeometry(2.2,.8,1.7), bodyMat); b2.position.set(-.2,1.7,0); g.add(b2);
+        
+        // Engine block
+        box(.7,.4,1.0, 0x6f7b87, 1.0, .7, 0, g);
+        
+        // Pistons
+        for(let i=0;i<4;i++){
+          const z=-.36+i*.24;
+          const p = box(.1,.15,.1, 0xd9dee3, 1.0, .8, z, g);
+          p.userData.baseY = .8;
+          p.userData.phase = i * Math.PI/2;
+          pistons.push(p);
+        }
+        
+        // Fuel Tank
+        box(.8,.3,1.3, 0xe0a030, -1.5, .6, 0, g);
+        
+        // Fuel Line
+        box(.05,.05,1.2, 0xe0a030, -.5, .6, 0, g);
+        
+        const wheel=(x,z,r,w)=>{const p=new THREE.Group();p.position.set(x,r,z);
+          const t=new THREE.Mesh(new THREE.CylinderGeometry(r,r,w,16),M(0x15191d));t.rotation.x=Math.PI/2;p.add(t);
+          p.userData.r=r;g.add(p);wheels.push(p)};
+        wheel(1.35,.95,.5,.4);wheel(1.35,-.95,.5,.4);wheel(-1.35,.95,.5,.4);wheel(-1.35,-.95,.5,.4);
+      }
+      g.position.set(XS,0,0);return{g,wheels,pistons,bodyMat};
+    }
+
+    setModel=(i,type)=>{
+      const colors=[0x16b3c4,0xf0a500,0x2ecc71,0x9b59b6]; 
+      if(models[i]&&models[i].type===type)return;
+      if(models[i])scene.remove(models[i].g);
+      models[i]=build(type,colors[i]);
+      models[i].type = type;
+      models[i].g.position.set(lastX[i],0,getLane(i));
+      scene.add(models[i].g);
+    };
+
+    renderer=new THREE.WebGLRenderer({antialias:true});
+    const dpr = window.devicePixelRatio || 1;
+    renderer.setPixelRatio(Math.min(dpr, 2));
+    stage.appendChild(renderer.domElement);
+    scene=new THREE.Scene();scene.background=new THREE.Color(dark?0x0e1a24:0xcfe3ef);
+    scene.fog=new THREE.Fog(scene.background.getHex(),90,240);
+    camera=new THREE.PerspectiveCamera(48,1,.5,500);
+    scene.add(new THREE.HemisphereLight(dark?0x6f8aa0:0xffffff,dark?0x1a2a20:0x9bb08a,dark?.85:.95));
+    const sun=new THREE.DirectionalLight(0xffffff,dark?.35:.7);sun.position.set(-20,40,30);scene.add(sun);
+    
+    // Ground & Road
+    box(600,.2,300,dark?0x1b2b22:0x7fa56a,0,-.2,0);box(130,.2,18,0x2a323a,0,-.1,0); 
+    for(let i=-15;i<=15;i++)box(2,.03,.25,0xeeeeee,i*4,.02,0);
+    [-8.2,8.2].forEach(z=>box(130,.03,.2,0xeeeeee,0,.02,z));
+    box(.5,.03,18,0xffffff,XS-3.5,.02,0);
+
+    // --- END POINT MARKING (FINISH LINE & GATE) ---
+    const finX = XE + 2.0; // Aligned to car front
+    const cv=document.createElement('canvas');cv.width=cv.height=64;const g=cv.getContext('2d');
+    for(let i=0;i<8;i++)for(let j=0;j<8;j++){g.fillStyle=(i+j)%2?'#111':'#fff';g.fillRect(i*8,j*8,8,8)}
+    const tex=new THREE.CanvasTexture(cv);tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(.25,2);
+    
+    // Checkered ground marking
+    const fin=new THREE.Mesh(new THREE.PlaneGeometry(1.6,18),new THREE.MeshBasicMaterial({map:tex}));
+    fin.rotation.x=-Math.PI/2;fin.position.set(finX,.04,0);scene.add(fin);
+    
+    // Vertical checkered banner with DoubleSide rendering
+    const bannerMat = new THREE.MeshBasicMaterial({map:tex, side: THREE.DoubleSide});
+    const banner = new THREE.Mesh(new THREE.PlaneGeometry(19.2, 1.5), bannerMat);
+    banner.rotation.y = Math.PI / 2; 
+    banner.position.set(finX, 4.8, 0); 
+    scene.add(banner);
+
+    [-8.9,8.9].forEach(z=>box(.4,6,.4,0xdddddd,finX,3,z));box(.6,.9,19.2,0x222222,finX,6,0);
+    // ---------------------------------------------
+
+    // Trees
+    for(let i=0;i<30;i++){
+      const x=-58+i*4,z=(i%2?1:-1)*(13+(i*7)%6),h=2.5+(i*5)%3; 
+      const t=new THREE.Mesh(new THREE.CylinderGeometry(.25,.3,1.2,6),M(0x5b3d24));t.position.set(x,.6,z);scene.add(t);
+      const c=new THREE.Mesh(new THREE.ConeGeometry(1.3,h,7),M(dark?0x1e5a3a:0x2f7d46));c.position.set(x,1.2+h/2,z);scene.add(c);
+    }
+    
+    ALL_KEYS.forEach((k,i)=>{for(let p=0;p<24;p++){
+      const m=new THREE.Mesh(new THREE.SphereGeometry(.3,6,5),new THREE.MeshBasicMaterial({color:0x8a949c,transparent:true,opacity:0}));
+      m.visible=false;m.userData={life:0};scene.add(m);puffs[i].push(m)}});
+
+    const fit=()=>{
+      if(!stage || !stage.clientWidth) return;
+      const w=stage.clientWidth,h=stage.clientHeight;
+      if(!w||!h)return;
+      renderer.setSize(w,h,false);
+      camera.aspect=w/h;
+      camera.updateProjectionMatrix();
+    };
+    
+    if (window.ResizeObserver) new ResizeObserver(fit).observe(stage);
+    else window.addEventListener('resize', fit);
+    fit();
+
+    let d0=null;
+    stage.addEventListener('pointerdown',e=>{d0=e.clientX;stage.setPointerCapture(e.pointerId)});
+    stage.addEventListener('pointermove',e=>{if(d0!==null){drag=Math.max(-1.3,Math.min(1.3,drag-(e.clientX-d0)*.006));d0=e.clientX}});
+    ['pointerup','pointercancel'].forEach(ev=>stage.addEventListener(ev,()=>d0=null));
+    
+    let last=performance.now();
+    loopActive = true;
+    let time = 0;
+    
+    const loop=now=>{
+      if(!loopActive) return;
+      const dt=Math.min(.05,(now-last)/1000);last=now;
+      time += dt;
+      
+      if(models[0] && renderer && scene && camera){
+        for(let i=0;i<numVehicles;i++){
+          if(moving[i]){acc[i]+=rate[i]*dt;
+            while(acc[i]>=1){acc[i]-=1;const m=puffs[i].find(p=>p.userData.life<=0);if(!m)break;
+              m.position.set(models[i].g.position.x-2.4,.7,getLane(i)+(Math.random()-.5)*.6);
+              Object.assign(m.userData,{life:1,vx:-1.2-Math.random(),vy:.9+Math.random()*.6,vz:(Math.random()-.5)*.8});m.visible=true}}
+        }
+        puffs.forEach(a=>a.forEach(m=>{const u=m.userData;if(u.life<=0)return;u.life-=dt*.7;
+          if(u.life<=0){m.visible=false;return}
+          m.position.x+=u.vx*dt;m.position.y+=u.vy*dt;m.position.z+=u.vz*dt;
+          m.scale.setScalar(1+(1-u.life)*2.4);m.material.opacity=u.life*.55}));
+        
+        models.forEach(m => {
+          if(m && m.pistons && !reduce) {
+            m.pistons.forEach(p => {
+              p.position.y = p.userData.baseY + Math.sin(time * 15 + p.userData.phase) * 0.08;
+            });
+          }
+        });
+
+        let minX=1000, maxX=-1000;
+        for(let i=0;i<numVehicles;i++){ if(models[i]){minX=Math.min(minX,models[i].g.position.x);maxX=Math.max(maxX,models[i].g.position.x);}}
+        const center=(minX+maxX)/2;
+        
+        camX+=(center-camX)*.06;
+        let targetCamD = numVehicles===4 ? 38 : (numVehicles===2 ? 26 : 20);
+        if(numVehicles===1 && isXray) targetCamD = 14;
+        camD+=(targetCamD-camD)*.04;
+        
+        const a = reduce ? 0.35 + drag : (running?.35:.35+Math.sin(now*.0003)*.4)+drag;
+        camera.position.set(camX+Math.sin(a)*camD,camD*.5+3,Math.cos(a)*camD);
+        camera.lookAt(camX,1.2,0);
+        renderer.render(scene,camera);
+      }
+      renderRafId = requestAnimationFrame(loop);
+    };
+    renderRafId = requestAnimationFrame(loop);
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        loopActive = false;
+        if (renderRafId) { cancelAnimationFrame(renderRafId); renderRafId = null; }
+      } else {
+        if (!loopActive) {
+          loopActive = true;
+          last = performance.now();
+          renderRafId = requestAnimationFrame(loop);
+        }
+      }
+    });
+
+  } catch(e) {
+    console.error("WebGL Error:", e);
+    has = false;
+    loopActive = false;
+    if (renderRafId) cancelAnimationFrame(renderRafId);
+    stage.innerHTML='<div class="msg">The 3D view could not initialize (WebGL may be disabled). The simulation numbers below still work.</div>';
+  }
+}
+
+/* ---------- Chemistry Logic ---------- */
+function updateChemistry() {
+  const fuel = $('#fuelA').value;
+  const data = F[fuel];
+  if(data) {
+    $('#eqDisplay').textContent = data.eq;
+    $('#compDisplay').textContent = data.comp;
+    $('#energyDisplay').textContent = data.cv + ' MJ/' + data.u;
+    $('#co2Display').textContent = data.co + ' kg/' + data.u;
+  }
+}
+
+/* ---------- Simulation Logic ---------- */
+function setInputsState(disabled) {
+  document.querySelectorAll('input:not(.ci), select, .seg button, #go').forEach(el => el.disabled = disabled);
+}
+
+function handleInvalidInput() {
+  $('#err').textContent='Enter valid values: distance/budget (1-100000), mileage (1-100), price (1-1000), and trips/month (1-100 whole number).';
+  $('#res').hidden=true;
+  hud.forEach(H => { H.nm.textContent = ''; H.tag.textContent = ''; H.bar.style.width = '0%'; H.tx.textContent = ''; });
+  if(has) reset();
+}
+
+function prep(){
+  X=val('#main');
+  const trips=val('#trips');
+  
+  if (!inRange(X, 1, 100000)) return false;
+  
+  if (mode === 'trip' && (!Number.isInteger(trips) || !inRange(trips, 1, 100))) return false;
+  
+  const activeKeys=ALL_KEYS.slice(0,numVehicles);
+  vs=activeKeys.map(k=>({key:k,name:$('#name'+k).value.trim()||'Vehicle '+k,type:$('#type'+k).value,fuel:$('#fuel'+k).value,mil:val('#mil'+k),pri:val('#pri'+k)}));
+  vs.forEach(v=>v.f=F[v.fuel]);
+  
+  if (vs.some(v => !inRange(v.mil, 1, 100) || !inRange(v.pri, 1, 1000))) return false;
+  
+  tot=vs.map(v=>{
+    const cpk=v.pri/v.mil;
+    const km=mode==='trip'?X:X/cpk;
+    const fuel=km/v.mil;
+    return{cpk,km,fuel,cost: fuel * v.pri * (mode === 'trip' ? trips : 1),co2:fuel*v.f.co,co2km:v.f.co/v.mil*1000,mj:fuel*v.f.cv};
+  });
+  
+  maxR=Math.max(...tot.map(t=>t.km));
+  maxF=Math.max(...tot.map(t=>t.fuel));
+  maxC=Math.max(...tot.map(t=>t.co2/t.km));
+  
+  if(has) vs.forEach((v,i)=>setModel(i,v.type==='bike'?'bike':'car'));
+  return true;
+}
+
+function draw(t){
+  const trips=val('#trips')||1;
+  vs.forEach((v,i)=>{
+    const H=hud[i];let km,p;
+    if(mode==='trip'){km=X*t;p=t}else{km=Math.min(t*maxR,tot[i].km);p=km/maxR}
+    
+    const fuel = km / v.mil;
+    const cost = fuel * v.pri * (mode === 'trip' ? trips : 1);
+    const co2 = fuel * v.f.co;
+    
+    if(has&&models[i]){
+      const x=XS+p*(XE-XS),dx=x-lastX[i];lastX[i]=x;
+      models[i].g.position.x=x;
+      models[i].g.position.z=getLane(i); 
+      models[i].wheels.forEach(w=>w.rotation.z-=dx/w.userData.r);
+    }
+    
+    moving[i]=t>0&&t<1&&km<tot[i].km-1e-9?1:0;
+    rate[i]=3+12*((tot[i].co2/tot[i].km)/maxC);
+    H.nm.textContent=v.name+' ('+v.fuel+')';
+    
+    let costLabel = mode==='trip' ? (trips>1?' (Monthly)':' (Trip)') : ' (Spent)';
+    let co2Label = mode === 'trip' ? (t >= 1 ? 'CO₂ per trip' : 'CO₂ so far') : 'CO₂ for reached distance';
+    
+    H.tx.textContent = km.toFixed(1)+' km · '+f2(fuel)+' '+v.f.u+' · Rs '+f2(cost)+costLabel+' · '+f2(co2)+' kg '+co2Label;
+    
+    let frac = mode === 'trip' ? (maxF > 0 ? fuel / maxF : 0) : Math.max(0, (X - cost) / X);
+    const widthPct = frac <= 0 ? 0 : Math.max(2, Math.min(100, frac * 100));
+    H.bar.style.width = widthPct+'%';
+    
+    H.tag.textContent=mode==='trip'?(t>=1?'Arrived':''):(km>=tot[i].km-1e-9&&t>0?'Out of fuel':'');
+  });
+}
+
+function finish(){
+  setInputsState(false); 
+  
+  $('#trips').disabled = (mode === 'budget');
+  $('#tripsWrap').style.opacity = (mode === 'budget' ? '0.4' : '1');
+
+  const trips=val('#trips')||1;
+
+  const R=[
+    mode==='trip'?['Fuel needed (per trip)',i=>f2(tot[i].fuel)+' '+vs[i].f.u]:['Distance reached',i=>f2(tot[i].km)+' km','km',-1],
+    mode==='trip'?['Total fuel cost (x'+trips+' trips)',i=>'Rs '+f2(tot[i].cost),'cost',1]:['Fuel cost (single budget)',i=>'Rs '+f2(tot[i].cost),'cost',1],
+    ['Cost per km',i=>'Rs '+f2(tot[i].cpk),'cpk',1],
+    [
+      mode === 'trip'
+        ? 'Energy released per trip (est.)'
+        : 'Energy released for reached distance (est.)',
+      i => f2(tot[i].mj) + ' MJ'
+    ],
+    [
+      mode === 'trip'
+        ? 'CO₂ emitted per trip (est.)'
+        : 'CO₂ emitted for reached distance (est.)',
+      i => f2(tot[i].co2) + ' kg',
+      mode === 'trip' ? 'co2' : null,
+      1
+    ],
+    ['CO₂ per km (est.)', i => f2(tot[i].co2km) + ' g/km', 'co2km', 1]
+  ];
+  
+  let h='<tr><th></th>';
+  vs.forEach(v=>h+='<th>'+esc(v.name)+'</th>');
+  h+='</tr>';
+  
+  R.forEach(r=>{
+    let bestIdx=-1;
+    if(r[2]&&r[3]){
+      let bestVal = r[3]===1 ? Infinity : -Infinity;
+      for(let i=0;i<numVehicles;i++){
+        const v = tot[i][r[2]];
+        if((r[3]===1 && v < bestVal) || (r[3]===-1 && v > bestVal)){ bestVal=v; bestIdx=i; }
+      }
+    }
+    h+='<tr><th>'+r[0]+'</th>';
+    for(let i=0;i<numVehicles;i++){
+      h+='<td'+(bestIdx===i?' class="win"':'')+'>'+r[1](i)+'</td>';
+    }
+    h+='</tr>';
+  });
+  $('#tbl').innerHTML=h;
+
+  const L=[];
+  let v1="", v2="", v3="", v4="";
+  const n=i=>esc(vs[i].name);
+  
+  const near=(a,b)=>Math.abs(a-b)<=1e-9*Math.max(1,Math.abs(a));
+  const best=(key,low)=>{let b=tot[0][key];tot.forEach(t=>{if(low?t[key]<b:t[key]>b)b=t[key]});return tot.map((t,i)=>near(t[key],b)?i:-1).filter(i=>i>=0)};
+  const names=a=>a.map(n).join(' & ');
+  
+  if(mode==='trip'){
+    const c=best('cost',true);
+    L.push(`<b>${names(c)}</b> ${c.length>1?'tie for the':'has the'} lowest total fuel cost for ${trips} trips.`);
+    v1 = `<b>Q: Why is fuel efficiency important?</b><br>A: Higher fuel efficiency reduces the amount of fuel needed for a trip, directly lowering operating costs. For ${trips} trips of ${X}km, ${names(c)} ${c.length>1?'tie for the lowest total cost at':'has the lowest total cost at'} Rs ${f2(tot[c[0]].cost)}.`;
+  } else {
+    const far=best('km',false);
+    L.push(`<b>${names(far)}</b> ${far.length>1?'tie for travelling':'travels'} the farthest on a budget of Rs ${X}.`);
+    v1 = `<b>Q: How does the program calculate distance from budget?</b><br>A: Using <code>Distance = (Budget / Fuel Price) * Mileage</code>. On Rs ${X}, ${names(far)} can theoretically travel an estimated ${f2(tot[far[0]].km)}km. (Note: Assumes constant mileage and price).`;
+  }
+
+  let hiMilIdx = 0, loCpkIdx = 0;
+  for (let i = 1; i < numVehicles; i++) {
+    if (vs[i].mil > vs[hiMilIdx].mil) hiMilIdx = i;
+    if (tot[i].cpk < tot[loCpkIdx].cpk) loCpkIdx = i;
+  }
+
+  const sameUnit = vs.every(v => v.f.u === vs[0].f.u);
+
+  if (numVehicles === 1) {
+    v2 = `<b>Q: How is cost per km calculated?</b><br>A: Cost per km = Fuel Price ÷ Mileage. For ${n(0)}, it is Rs ${f2(tot[0].cpk)}/km.`;
+  } else if (!sameUnit) {
+    v2 = `<b>Q: Why can't raw mileage be compared across different fuel units?</b><br>A: Some vehicles use litres (L) and others use kilograms (kg), so their mileage values cannot be directly compared. Compare cost per km instead: ${n(loCpkIdx)} has the lowest cost at Rs ${f2(tot[loCpkIdx].cpk)}/km.`;
+    L.push(`The vehicles use different fuel units, so raw mileage is not directly comparable. <b>${n(loCpkIdx)}</b> has the lowest cost per km (Rs ${f2(tot[loCpkIdx].cpk)}/km).`);
+  } else if (hiMilIdx !== loCpkIdx) {
+    v2 = `<b>Q: Why does mileage alone not decide the best fuel?</b><br>A: ${n(hiMilIdx)} has the highest mileage (${vs[hiMilIdx].mil} km/${vs[hiMilIdx].f.u}), but ${n(loCpkIdx)} has a lower cost per km (Rs ${f2(tot[loCpkIdx].cpk)} vs Rs ${f2(tot[hiMilIdx].cpk)}). Both mileage and fuel price affect the cost.`;
+    L.push(`Higher mileage is not always cheapest: <b>${n(hiMilIdx)}</b> has the highest mileage, but <b>${n(loCpkIdx)}</b> has the lowest cost per km.`);
+  } else {
+    v2 = `<b>Q: Why does mileage alone not decide the best fuel?</b><br>A: In this example, the vehicle with the highest mileage also has the lowest cost per km. However, changes in fuel prices can change which vehicle is cheaper to operate.`;
+  }
+
+  const hi=best('mj',false)[0];
+  v3 = `<b>Q: What is Calorific Value?</b><br>A: It is the heat energy released on complete combustion of a unit quantity of fuel. For ${vs[hi].fuel}, the approximate reference value used here is ${vs[hi].f.cv} MJ/${vs[hi].f.u}. Based on the fuel consumed, ${n(hi)} has the highest calculated energy release${mode === 'trip' ? ' per trip' : ' for the reached distance'}${numVehicles > 1 ? ' among the compared vehicles' : ''}, at ${f2(tot[hi].mj)} MJ. <em>(Note: This is chemical energy, not useful mechanical energy at the wheels).</em>`;
+
+  let compText = `A representative component is <b>${vs[0].f.comp}</b>.`;
+  if (vs[0].fuel === 'E20') compText = `<b>${vs[0].f.comp}</b>. Note: E20 is a blend, this equation represents the ethanol portion only.`;
+  else if (vs[0].fuel === 'Petrol' || vs[0].fuel === 'Diesel' || vs[0].fuel === 'LPG') compText = `A representative component is <b>${vs[0].f.comp}</b>. (Note: ${vs[0].fuel} is a mixture, not a pure compound).`;
+
+  v4 = `<b>Q: What is the combustion equation for ${vs[0].fuel}?</b><br>A: ${compText}<br><code>${vs[0].f.eq}</code><br><br><em>Viva Tip: Do not claim CNG is perfectly clean just because it produces 1 CO₂ molecule. A fair environmental comparison must consider the total energy output and emissions per unit of distance (which our table calculates).</em>`;
+
+  $('#vivaQ1').innerHTML = v1;
+  $('#vivaQ2').innerHTML = v2;
+  $('#vivaQ3').innerHTML = v3;
+  $('#vivaQ4').innerHTML = v4;
+
+  $('#verdict').innerHTML=L.map(s=>'<li>'+s+'</li>').join('');
+  $('#res').hidden=false;
+}
+
+function reset(){
+  lastX.fill(XS);
+  acc.fill(0);
+  moving.fill(0);
+  rate.fill(0);
+  
+  models.forEach(m => {
+    if (!m) return;
+    m.g.position.x = XS;
+    m.wheels.forEach(w => { w.rotation.z = 0; });
+  });
+  
+  puffs.forEach(list => list.forEach(p => {
+    p.visible = false; p.userData.life = 0; p.material.opacity = 0; p.scale.setScalar(1);
+  }));
+}
+
+function updateXrayUI() {
+  const btn = $('#xrayBtn');
+  if (!btn) return; 
+  
+  const show = has && numVehicles === 1 && !!models[0];
+  btn.hidden = !show;
+
+  const activeXray = show && isXray; 
+
+  if (models[0]) {
+    models[0].bodyMat.transparent = activeXray;
+    models[0].bodyMat.opacity = activeXray ? 0.25 : 1;
+    models[0].bodyMat.needsUpdate = true;
+  }
+
+  btn.setAttribute('aria-pressed', String(activeXray));
+  btn.textContent = `X-Ray View: ${activeXray ? 'On' : 'Off'}`;
+}
+
+const xrayBtn = $('#xrayBtn');
+if (xrayBtn) {
+  xrayBtn.addEventListener('click', () => {
+    if (numVehicles !== 1 || !has) return;
+    isXray = !isXray;
+    updateXrayUI();
+  });
+}
+
+function setMode(m){
+  mode=m;cancelAnimationFrame(raf);running=false;setInputsState(false);
+  $('#mTrip').setAttribute('aria-pressed',m==='trip');$('#mBud').setAttribute('aria-pressed',m==='budget');
+  $('#mainLbl').textContent=m==='trip'?'Trip distance (km)':'Fuel budget for each vehicle (Rs)';
+  $('#main').value=m==='trip'?120:500;
+  $('#go').textContent=m==='trip'?'Start trip':'Start race';
+  $('#cap').textContent=(m==='trip'?'Bars show fuel used, compared with the thirstier vehicle.':'Bars show money left. A vehicle stops when its budget runs out (estimated theoretical distance).')+' Grey puffs show relative CO₂ per km. Drag sideways to rotate the view.';
+  
+  $('#trips').disabled = (m === 'budget');
+  $('#tripsWrap').style.opacity = (m === 'budget' ? '0.4' : '1');
+  
+  if(prep()){ $('#err').textContent=''; reset(); draw(0); updateXrayUI(); $('#res').hidden=true; } 
+  else { handleInvalidInput(); }
+}
+
+function setNumVehicles(n){
+  cancelAnimationFrame(raf); running=false; setInputsState(false);
+  numVehicles=n;
+  $('#mSingle').setAttribute('aria-pressed',n===1);
+  $('#mTwo').setAttribute('aria-pressed',n===2);
+  $('#mFour').setAttribute('aria-pressed',n===4);
+  
+  $('#cardB').hidden = n < 2; $('#cardC').hidden = n < 4; $('#cardD').hidden = n < 4;
+  $('#hB').hidden = n < 2; $('#hC').hidden = n < 4; $('#hD').hidden = n < 4;
+  
+  $('.hud').classList.toggle('two', n>1);
+  
+  $('#trips').disabled = (mode === 'budget');
+  $('#tripsWrap').style.opacity = (mode === 'budget' ? '0.4' : '1');
+  
+  if(has){
+    for(let i=n;i<4;i++){ if(models[i]){ scene.remove(models[i].g); models[i]=null; } }
+    if(n===1 && models[0]) {
+      models[0].bodyMat.transparent = isXray; models[0].bodyMat.opacity = isXray ? 0.25 : 1;
+    } else {
+      models.forEach(m => { if(m) { m.bodyMat.transparent = false; m.bodyMat.opacity = 1; }});
+    }
+  }
+  
+  if(prep()){ $('#err').textContent=''; reset(); draw(0); updateXrayUI(); $('#res').hidden=true; } 
+  else { handleInvalidInput(); }
+}
+
+function unitLabels(k){
+  const u=F[$('#fuel'+k).value].u;
+  $('#uM'+k).textContent='km per '+u;
+  $('#uP'+k).textContent='Rs per '+u;
+}
+
+ALL_KEYS.forEach(k => {
+  const fuelEl = $('#fuel' + k);
+  if (!fuelEl) return;
+  fuelEl.addEventListener('change', e => {
+    $('#pri' + k).value = F[e.target.value].p;
+    unitLabels(k);
+    
+    if(k === 'A') updateChemistry();
+
+    if (running) return;
+    if (prep()) { $('#err').textContent = ''; reset(); draw(0); $('#res').hidden = true; } 
+    else { handleInvalidInput(); }
+  });
+});
+
+function calc(){
+  const ok=(v, max) => inRange(v, 1, max);
+  const d = val('#cD'), f = val('#cF'), m = val('#cM'), p = val('#cP');
+  const o=(l,v)=>`<div><dt>${l}</dt><dd>${v}</dd></div>`;
+  $('#cout').innerHTML=
+    o('Mileage (distance ÷ fuel used)', ok(d,100000) && ok(f,10000) ? f2(d/f)+' km/unit' : '—')+
+    o('Fuel required for the trip', ok(d,100000) && ok(m,100) ? f2(d/m)+' units' : '—')+
+    o('Trip cost', ok(d,100000) && ok(m,100) && ok(p,1000) ? 'Rs '+f2(d/m*p) : '—')+
+    o('Cost per km', ok(m,100) && ok(p,1000) ? 'Rs '+f2(p/m) : '—');
+}
+
+$('#mSingle').onclick=()=>setNumVehicles(1);
+$('#mTwo').onclick=()=>setNumVehicles(2);
+$('#mFour').onclick=()=>setNumVehicles(4);
+
+$('#mTrip').onclick=()=>setMode('trip');
+$('#mBud').onclick=()=>setMode('budget');
+document.addEventListener('input',e=>{
+  if(e.target.classList.contains('ci')){calc();return}
+  if(!running){
+    if(prep()){ $('#err').textContent=''; reset(); draw(0); $('#res').hidden=true; } 
+    else { handleInvalidInput(); }
+  }
+});
+
+$('#go').onclick=()=>{
+  cancelAnimationFrame(raf);
+  if(!prep()){ handleInvalidInput(); return; }
+  
+  $('#err').textContent=''; $('#res').hidden=true; setInputsState(true);
+  
+  running = true; reset(); draw(0);
+
+  if (reduce) { draw(1); running = false; finish(); return; }
+
+  const dur = 8000; const t0 = performance.now();
+  const step = now => {
+    const t = Math.min(1, (now - t0) / dur);
+    draw(t);
+    if (t < 1) { raf = requestAnimationFrame(step); } 
+    else { running = false; finish(); }
+  };
+  raf = requestAnimationFrame(step);
+};
+
+calc();ALL_KEYS.forEach(unitLabels);setNumVehicles(2);setMode('trip');
+updateChemistry();
+
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(!running)location.reload()});
+})();
+</script>
+</body>
+</html>
